@@ -6,11 +6,13 @@ public class GenerateBlocks : MonoBehaviour {
 	/// Load the prefab for the block into this variable.
 	/// </summary>
 	public BuildingBlock cube;
-	public int gridSize = 50;
+	public static int gridSize = 50;
 	public float cubeSize = 3f;
-	public float cubeSpacing = 4.0f;
+	public static float cubeSpacing = 4.0f;
 	
-	public BuildingBlock[,] blocks;
+	public static int numberOfLevels = 3;
+	
+	public static BuildingBlock[,] blocks;
 	
 	// Use this for initialization
 	void Start () 

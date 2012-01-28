@@ -47,8 +47,10 @@
      <Compile Include="Assets\Scripts\BuildingBlock.cs" />
      <Compile Include="Assets\Scripts\GenerateBlocks.cs" />
      <Compile Include="Assets\Scripts\LoadingScreenController.cs" />
+     <Compile Include="Assets\Scripts\MenuCameraScript.cs" />
+     <Compile Include="Assets\Scripts\MyEditable3DText.cs" />
      <Compile Include="Assets\Scripts\NetworkingScript.cs" />
-     <Compile Include="Assets\Scripts\PlayerScript.cs" />
+     <Compile Include="Assets\Scripts\Player.cs" />
      <Compile Include="Assets\Scripts\ShadowScript.cs" />
      <Compile Include="Assets\Scripts\SmoothLookAt.cs" />
      <Compile Include="Assets\Scripts\TextControl.cs" />

@@ -22,13 +22,16 @@ public class BuildingBlock : MonoBehaviour {
 	
 	// Controls for chaining
 	private BuildingBlock	m_PrevBlock;
-	private PlayerScript	m_TrailOwner;
-	private PlayerScript	m_Owner;
+	private Player	m_TrailOwner;
+	private Player	m_Owner;
 	
 	// Color controls
 	private Color			m_OwnerColor;
 	private Color			m_TrailColor;
 	
+	// Backup vars for undo of capture
+	private int				m_LevelBackup;
+	private Player	m_OwnerBackup;
 	
 	
 	// Use this for initialization
@@ -51,10 +54,25 @@ public class BuildingBlock : MonoBehaviour {
 	}
 	
 	// Accessor/Mutator for the cubes grid index
-	public Vector2 GridIndex {
+	public Vector2 GridIndex
+	{
 		get { return(m_GridIndex); }
 		set { m_GridIndex = value; }
 	}
+	
+	// Accessor for the owner object
+	public Player Owner
+	{
+		get { return(m_Owner); }
+	}
+	
+	// Accessor/Mutator for the direction value
+	public int DirectionCameFrom
+	{
+		get { return(m_DirectionCameFrom); }
+		set { m_DirectionCameFrom = value; }
+	}
+	
 	
 	
 	// Update is called once per frame
@@ -79,7 +97,7 @@ public class BuildingBlock : MonoBehaviour {
 			return;
 		}
 		
-		PlayerScript collidingPlayer = collider.GetComponent("PlayerScript") as PlayerScript;
+		Player collidingPlayer = collider.GetComponent("Player") as Player;
 		// Triggered a neutral block
 		if (m_TrailOwner == null)
 		{
@@ -88,7 +106,7 @@ public class BuildingBlock : MonoBehaviour {
 			m_TrailOwner.LastHitBlock = this;
 			
 			// Set the direction for filling algo, see top for number def
-			DetermineDirection();
+			DetermineDirection(m_PrevBlock);
 			
 			// Set the trail color
 			m_TrailColor = m_TrailOwner.PlayerColor;
@@ -103,7 +121,7 @@ public class BuildingBlock : MonoBehaviour {
 			if (m_TrailOwner.LastHitBlock.m_PrevBlock == this)
 			{
 				Debug.Log("Reversed :/");
-				PlayerScript ownerTemp = m_TrailOwner;
+				Player ownerTemp = m_TrailOwner;
 				ownerTemp.LastHitBlock.ChainNukeBlocks();
 				ownerTemp.LastHitBlock = null;
 			}
@@ -115,6 +133,10 @@ public class BuildingBlock : MonoBehaviour {
 					m_PrevBlock.ChainNukeBlocks();
 					m_PrevBlock = null;
 				}
+				
+				Debug.Log("Mode: " + m_DirectionCameFrom);
+				DetermineDirection(m_TrailOwner.LastHitBlock);
+				Debug.Log("Mode: " + m_DirectionCameFrom);
 				
 				// Now perform a capture of the enclosed area
 				m_TrailOwner.PerformCapture();
@@ -130,14 +152,16 @@ public class BuildingBlock : MonoBehaviour {
 	
 	
 	// Work out the direction the snake came from
-	void DetermineDirection()
+	void DetermineDirection(BuildingBlock prevBlock)
 	{
-		// No previous item so set it as diagonal
+		int direction = 0;
+		
+		// No previous item
 		if (m_PrevBlock == null)
-			m_DirectionCameFrom = 3;
+			return;
 		else
 		{
-			Vector2 prevGridIndex = m_PrevBlock.m_GridIndex;
+			Vector2 prevGridIndex = prevBlock.m_GridIndex;
 			
 			// Y's same
 			if (prevGridIndex.y == m_GridIndex.y)
@@ -145,7 +169,7 @@ public class BuildingBlock : MonoBehaviour {
 				// Y's the same and X's differ == horizontal
 				if (prevGridIndex.x != m_GridIndex.x)
 				{
-					m_DirectionCameFrom = 1;
+					direction = 1;
 				}
 			}
 			// Y's differ
@@ -154,15 +178,29 @@ public class BuildingBlock : MonoBehaviour {
 				// Y's differ and X's same == vertical
 				if (prevGridIndex.x == m_GridIndex.x)
 				{
-					m_DirectionCameFrom = 2;	
+					direction = 2;
 				}
 				// Both axes differ so must be a diagonal
 				else
 				{
-					m_DirectionCameFrom = 3;
+					direction = 3;
 				}
 			}
 		}
+		
+		// Set the previous blocks position
+		DirectionCameFrom = direction;
+		
+		// Used to set the first blocks direction at step 2
+		if (prevBlock.m_PrevBlock == null)
+			prevBlock.DirectionCameFrom = direction;
+		/*else
+		{
+			if (prevBlock.m_DirectionCameFrom == 2 && DirectionCameFrom == 1)
+			{
+				prevBlock.m_DirectionCameFrom = 1;
+			}
+		}*/
 	}
 	
 	
@@ -190,11 +228,7 @@ public class BuildingBlock : MonoBehaviour {
 	// Capture all the surrounding blocks
 	public void ChainCaptureBlocks()
 	{
-		m_MustLower = true;
-		m_MustRaise = false;
-		m_IsMoving = true;
-		
-		m_Owner = m_TrailOwner;
+		CaptureSpecificBlock(m_TrailOwner);
 		m_TrailOwner = null;
 		
 		if (m_PrevBlock != null)
@@ -202,6 +236,79 @@ public class BuildingBlock : MonoBehaviour {
 			m_PrevBlock.ChainCaptureBlocks();
 			m_PrevBlock = null;
 		}
+	}
+	
+	// Capture this specific block
+	public void CaptureSpecificBlock(Player owner)
+	{
+		// Push this block to the new owners processed block list
+		owner.ProcessBlock(this);
+		m_OwnerBackup = m_Owner;
+		m_LevelBackup = m_Level;
+		
+		// Set block move state variables
+		m_MustLower	= true;
+		m_MustRaise	= false;
+		m_IsMoving	= true;
+		
+		// If already owning the block then increase its level
+		if (m_Owner == owner)
+		{
+			m_Level++;
+			if (m_Level > GenerateBlocks.numberOfLevels)
+				m_Level = GenerateBlocks.numberOfLevels;
+		}
+		// Neutral block
+		else if (m_Owner == null)
+		{
+			// Block is available for capture, so change to level 1 player
+			if (m_Level <= 0)
+			{
+				m_Level = 1;
+				m_Owner = owner;
+			}
+			// Cannot capture level 3 neutral zone!
+			else if (m_Level == GenerateBlocks.numberOfLevels)
+			{
+				// Tell parent to reverse the capture
+				owner.UndoCapture(this);
+			}
+			// Else decrease level and remain neutral
+			else
+			{
+				m_Level--;
+			}
+		}
+		// Enemy held block
+		else if (m_Owner != owner)
+		{
+			// Cannot Capture this teritory so reject the fill!
+			if (m_Level == GenerateBlocks.numberOfLevels)
+			{
+				// Tell parent to reverse the capture
+				owner.UndoCapture(this);
+			}
+			// Attack the enemies zone
+			else
+			{
+				// Reduce the blocks effectiveness
+				m_Level--;
+				
+				// Level has been hit hard enough so move it to neutral
+				if (m_Level <= 0)
+				{
+					m_Level = 0;
+					m_Owner = null;
+				}
+			}
+		}
+	}
+	
+	// Undo a capture for an invalid area!
+	public void UndoCapture()
+	{
+		m_Owner = m_OwnerBackup;
+		m_Level = m_LevelBackup;
 	}
 	
 	
@@ -240,7 +347,10 @@ public class BuildingBlock : MonoBehaviour {
 		
 		Color primaryColor = m_DefaultColor;
 		if (m_Owner != null)
-			primaryColor = m_Owner.PlayerColor * 0.5f;
+		{
+			float level = 0.8f - (0.6f * (float)m_Level / (float)GenerateBlocks.numberOfLevels);
+			primaryColor = level * m_Owner.PlayerColor;
+		}
 		
 		// Move for a set distance!
 		if (this.transform.position.z >= (m_DefaultPos.z))
@@ -250,6 +360,13 @@ public class BuildingBlock : MonoBehaviour {
 			
 			this.transform.position		= m_DefaultPos;
 			this.renderer.material.color= primaryColor;
+			
+			/*if (m_DirectionCameFrom == 1)
+				this.renderer.material.color=Color.cyan;
+			else if (m_DirectionCameFrom == 2)
+				this.renderer.material.color=Color.yellow;
+			else if (m_DirectionCameFrom == 3)
+				this.renderer.material.color=Color.magenta;*/
 		}
 		else
 		{

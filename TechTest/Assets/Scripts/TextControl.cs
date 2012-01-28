@@ -7,16 +7,20 @@ public class TextControl : MonoBehaviour {
 	{
 		PLAY_BUTTON_CREATE,
 		PLAY_BUTTON_JOIN,
+		JOIN_BUTTON_CONNECT,
+		JOIN_BUTTON_BACK,
+		JOIN_IP_ENTRY_FIELD,
 		QUIT_BUTTON
 	}
 	
-	public static bool hostGame = false;
+	public static bool hostGame = true;
 	public static bool HostGame {
 		get {return hostGame;}		
 	}
 	
 	public ButtonType buttonType;
 	
+	public MenuCameraScript menuCamera;
 	// Use this for initialization
 	void Start () {
 	
@@ -47,9 +51,15 @@ public class TextControl : MonoBehaviour {
 				Application.LoadLevel(1);
 				break;
 			case ButtonType.PLAY_BUTTON_JOIN:
+				menuCamera.CurrentOrientation = menuCamera.JOIN_ORIENTATION;
+				break;
+			case ButtonType.JOIN_BUTTON_CONNECT:
 				hostGame = false;
 				Application.LoadLevel(1);
 				break;
+			case ButtonType.JOIN_BUTTON_BACK:
+				menuCamera.CurrentOrientation = menuCamera.MAIN_ORIENTATION;
+				break;			
 			case ButtonType.QUIT_BUTTON:
 				Application.Quit();
 				break;
