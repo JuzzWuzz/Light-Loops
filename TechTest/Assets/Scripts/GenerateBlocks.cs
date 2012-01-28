@@ -8,7 +8,7 @@ public class GenerateBlocks : MonoBehaviour {
 	public BuildingBlock cube;
 	public UnityEngine.Transform plane;
 	public int gridSize = 50;
-	public float cubeSize = 3.5f;
+	public float cubeSize = 3f;
 	public float cubeSpacing = 4.0f;
 	
 	// Use this for initialization
