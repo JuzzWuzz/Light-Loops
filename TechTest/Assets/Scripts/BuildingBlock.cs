@@ -11,6 +11,12 @@ public class BuildingBlock : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
+			
+	}
 	
+	void OnCollisionEnter()
+	{
+		this.renderer.material.color = Color.red;
+		Debug.Log("Collision detected on buildingBlock");
 	}
 }
