@@ -24,6 +24,7 @@ public class BuildingBlock : MonoBehaviour {
 	private BuildingBlock	m_PrevBlock;
 	private Player	m_TrailOwner;
 	private Player	m_Owner;
+	private Player	m_PlayerPresent;
 	
 	// Color controls
 	private Color			m_OwnerColor;
@@ -40,10 +41,32 @@ public class BuildingBlock : MonoBehaviour {
 		m_DefaultColor = Color.grey;
 		this.renderer.material.color = m_DefaultColor;
 		
-		m_TrailOwner= null;
-		m_PrevBlock	= null;
+		Reset();
+	}
+	
+	// Reset the blocks variables
+	public void Reset()
+	{
+		m_MustLower = false;
+		m_MustRaise = false;
+		m_IsMoving	= false;
 		
 		m_Level		= 0;
+		
+		m_DirectionCameFrom = 0;
+		
+		m_PrevBlock	= null;
+		m_TrailOwner= null;
+		m_Owner		= null;
+		m_PlayerPresent = null;
+		
+		m_OwnerColor= m_DefaultColor;
+		m_TrailColor= m_DefaultColor;
+		
+		m_LevelBackup = m_Level;
+		m_OwnerBackup = m_Owner;
+		
+		this.transform.position = m_DefaultPos;
 	}
 	
 	// Set the initial position of the cube and store this as default!
@@ -73,6 +96,19 @@ public class BuildingBlock : MonoBehaviour {
 		set { m_DirectionCameFrom = value; }
 	}
 	
+	// Accessor for the blocks level
+	public int Level
+	{
+		get { return(m_Level); }
+	}
+	
+	// Accessor/Mutator for the blocks status of having a player on it or not
+	public Player PlayerPresent
+	{
+		get { return(m_PlayerPresent); }
+		set { m_PlayerPresent = value; }
+	}
+	
 	
 	
 	// Update is called once per frame
@@ -97,7 +133,27 @@ public class BuildingBlock : MonoBehaviour {
 			return;
 		}
 		
+		// Get the colliding object (the player)
 		Player collidingPlayer = collider.GetComponent("Player") as Player;
+		
+		// Remove self from last known block
+		if(m_TrailOwner != null)
+		{
+		if (m_TrailOwner.LastHitBlock != null)
+			m_TrailOwner.LastHitBlock.m_PlayerPresent = null;
+		}
+		// Taking ownership of fresh block
+		if (m_PlayerPresent == null)
+		{
+			m_PlayerPresent = collidingPlayer;
+		}
+		// Enemy already has this block! So kill colliding player
+		else if (m_PlayerPresent != collidingPlayer)
+		{
+			// Kill player
+			collidingPlayer.KillPlayer();
+		}
+		
 		// Triggered a neutral block
 		if (m_TrailOwner == null)
 		{
@@ -146,6 +202,8 @@ public class BuildingBlock : MonoBehaviour {
 		else
 		{
 			Debug.Log("Hit enemy block");
+			ChainNukeBlocks();
+			OnTriggerEnter(collider);
 		}
 	}
 	
@@ -251,6 +309,8 @@ public class BuildingBlock : MonoBehaviour {
 		m_MustRaise	= false;
 		m_IsMoving	= true;
 		
+		bool KillEnemyPlayer = m_PlayerPresent != owner;
+		
 		// If already owning the block then increase its level
 		if (m_Owner == owner)
 		{
@@ -282,6 +342,9 @@ public class BuildingBlock : MonoBehaviour {
 		// Enemy held block
 		else if (m_Owner != owner)
 		{
+			if (KillEnemyPlayer && m_PlayerPresent == m_Owner)
+				KillEnemyPlayer = false;
+			
 			// Cannot Capture this teritory so reject the fill!
 			if (m_Level == GenerateBlocks.numberOfLevels)
 			{

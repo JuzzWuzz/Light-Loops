@@ -3,6 +3,7 @@ using System.Collections;
 
 public class NetworkingScript : MonoBehaviour {
 	public static int myPlayer;
+	public static Player localPlayer;
 	
 	public static string host = "127.0.0.1";
 	
@@ -18,17 +19,13 @@ public class NetworkingScript : MonoBehaviour {
 	{		
 		Network.sendRate = 40;
 		if(TextControl.HostGame)
-		{
-			myPlayer = 1;			
+		{						
 			Network.InitializeServer(4, 22000, false);	
 		}
 		else
-		{
-			myPlayer = 2;
-			Network.Connect(host, 22000);
-			
-		}
-			
+		{			
+			Network.Connect(host, 22000);			
+		}			
 	}
 	
 	// Update is called once per frame
@@ -44,20 +41,13 @@ public class NetworkingScript : MonoBehaviour {
 			{
 				firstRun = false;
 				
+				myPlayer = Player.numberOfPlayers + 1;				
 				float maxPoint = GenerateBlocks.gridSize * GenerateBlocks.cubeSpacing;
-				Vector3 position = new Vector3(Random.value * maxPoint, Random.value * maxPoint, 195);
-				
-				if(TextControl.HostGame)
-				{
-					player.playerNumber = 1;
-				}
-				else
-				{
-					player.playerNumber = 2;
-				}
-				
+				Vector3 position = new Vector3(Random.value * maxPoint, Random.value * maxPoint, 195);				
 				Player playerInstantiation = (Player)Network.Instantiate(player, position, Quaternion.identity, 0);				
 				mainCamera.target = playerInstantiation.transform;
+				
+				localPlayer = playerInstantiation;
 			}
 		}
 	
