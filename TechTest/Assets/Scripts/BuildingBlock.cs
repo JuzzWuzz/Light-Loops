@@ -13,6 +13,7 @@ public class BuildingBlock : MonoBehaviour {
 	private bool			m_MustRaise;
 	private bool			m_MustLower;
 	private bool			m_IsMoving;
+	private int				m_HeightLevel; // 0 = base, 1 = trail, 2 = max height
 	
 	public bool				m_MustOverrideColor;
 	public Color			m_OverrideColor;
@@ -61,6 +62,7 @@ public class BuildingBlock : MonoBehaviour {
 		m_MustLower 		= false;
 		m_MustRaise			= false;
 		m_IsMoving			= false;
+		m_HeightLevel		= 0;
 		
 		m_MustOverrideColor	= false;
 		
@@ -105,13 +107,6 @@ public class BuildingBlock : MonoBehaviour {
 	public Player Owner
 	{
 		get { return(m_Owner); }
-	}
-	
-	// Accessor/Mutator for the direction value
-	public int DirectionCameFrom
-	{
-		get { return(m_DirectionCameFrom); }
-		set { m_DirectionCameFrom = value; }
 	}
 	
 	// Accessor for the blocks level
@@ -245,15 +240,25 @@ public class BuildingBlock : MonoBehaviour {
 				m_PrevBlock.m_NextBlock = this;
 			m_TrailOwner.LastHitBlock = this;
 			
-			// Set the direction for filling algo, see top for number def
-			DetermineDirection(m_PrevBlock);
-			
 			// Set the trail color
 			m_TrailColor = m_TrailOwner.PlayerColor;
 			
-			m_MustRaise = true;
-			m_MustLower = false;
-			m_IsMoving = true;
+			// If the block is a level 3 then lower for the trail
+			if (m_Level == GenerateBlocks.numberOfLevels)
+			{
+				m_MustRaise 	= false;
+				m_MustLower		= true;
+				m_IsMoving		= true;
+				m_HeightLevel	= 1;
+			}
+			// Raise the block to the trails height
+			else
+			{
+				m_MustRaise 	= true;
+				m_MustLower		= false;
+				m_IsMoving		= true;
+				m_HeightLevel	= 1;
+			}
 		}
 		// Hit own block
 		else if (m_TrailOwner == collidingPlayer)
@@ -273,9 +278,6 @@ public class BuildingBlock : MonoBehaviour {
 					m_PrevBlock.ChainNukeBlocks();
 					m_PrevBlock = null;
 				}
-				
-				// Set the direction for filling algo, see top for number def
-				DetermineDirection(m_TrailOwner.LastHitBlock);
 				
 				// Now perform a capture of the enclosed area
 				m_TrailOwner.PerformCapture(this);
@@ -297,58 +299,6 @@ public class BuildingBlock : MonoBehaviour {
 	}
 	
 	
-	
-	// Work out the direction the snake came from
-	void DetermineDirection(BuildingBlock prevBlock)
-	{
-		int direction = 0;
-		
-		// No previous item
-		if (m_PrevBlock == null)
-			return;
-		else
-		{
-			Vector2 prevGridIndex = prevBlock.m_GridIndex;
-			
-			// Y's same
-			if (prevGridIndex.y == m_GridIndex.y)
-			{
-				// Y's the same and X's differ == horizontal
-				if (prevGridIndex.x != m_GridIndex.x)
-				{
-					direction = 1;
-				}
-			}
-			// Y's differ
-			else
-			{
-				// Y's differ and X's same == vertical
-				if (prevGridIndex.x == m_GridIndex.x)
-				{
-					direction = 2;
-				}
-				// Both axes differ so must be a diagonal
-				else
-				{
-					direction = 3;
-				}
-			}
-		}
-		
-		// Set the previous blocks position
-		DirectionCameFrom = direction;
-		
-		// Used to set the first blocks direction at step 2
-		if (prevBlock.m_PrevBlock == null)
-			prevBlock.DirectionCameFrom = direction;
-		/*else
-		{
-			if (prevBlock.m_DirectionCameFrom == 2 && DirectionCameFrom == 1)
-			{
-				prevBlock.m_DirectionCameFrom = 1;
-			}
-		}*/
-	}
 	
 	// Determine the position of this block in relation to another, returns a 4-way int
 	public int Direction(BuildingBlock block)
@@ -388,9 +338,22 @@ public class BuildingBlock : MonoBehaviour {
 	{
 		m_TrailOwner = null;
 		
-		m_MustLower = true;
-		m_MustRaise = false;
-		m_IsMoving = true;
+		// If the block is a level 3 then raise back to its normal height
+		if (m_Level == GenerateBlocks.numberOfLevels)
+		{
+			m_MustRaise 	= true;
+			m_MustLower		= false;
+			m_IsMoving		= true;
+			m_HeightLevel	= 2;
+		}
+		// Otherwise lower block to base
+		else
+		{
+			m_MustRaise 	= false;
+			m_MustLower		= true;
+			m_IsMoving		= true;
+			m_HeightLevel	= 0;
+		}
 		
 		// Reset direction came from
 		m_DirectionCameFrom = 0;
@@ -439,14 +402,12 @@ public class BuildingBlock : MonoBehaviour {
 		m_OwnerBackup = m_Owner;
 		m_LevelBackup = m_Level;
 		
-		// Set block move state variables
-		m_MustLower	= true;
-		m_MustRaise	= false;
-		m_IsMoving	= true;
-		
+		// Set block as captured
 		m_Captured	= true;
 		
 		bool KillEnemyPlayer = m_PlayerPresent != owner;
+		if (m_PlayerPresent != null)
+			Debug.Log(m_PlayerPresent.ToString());// + "=====" + m_Owner.ToString());
 		
 		// Calculate the score for the current block
 		Player prevOwner	= m_Owner;
@@ -508,6 +469,12 @@ public class BuildingBlock : MonoBehaviour {
 			}
 		}
 		
+		if (KillEnemyPlayer)
+			owner.KillEnemyPlayer(m_PlayerPresent);
+		
+		// Raise or lower the block!
+		DetermineRaisingOrLowering();
+		
 		// Calculate the new score
 		newScore = (float)m_Level / (float)GenerateBlocks.numberOfLevels;
 		
@@ -520,11 +487,39 @@ public class BuildingBlock : MonoBehaviour {
 			m_Owner.ChangeScore(newScore);
 	}
 	
+	// Work out requirement to move the block (raise / lower)
+	void DetermineRaisingOrLowering()
+	{
+		int requiredHeight = 0;
+		if (m_Level == GenerateBlocks.numberOfLevels)
+		{
+			requiredHeight = 2;
+		}
+		
+		if (m_HeightLevel > requiredHeight)
+		{
+			m_MustRaise 	= false;
+			m_MustLower		= true;
+			m_IsMoving		= true;
+			m_HeightLevel	= requiredHeight;
+		}
+		else if (m_HeightLevel <= requiredHeight)
+		{
+			m_MustRaise 	= true;
+			m_MustLower		= false;
+			m_IsMoving		= true;
+			m_HeightLevel	= requiredHeight;
+		}
+	}
+	
 	// Undo a capture for an invalid area!
 	public void UndoCapture()
 	{
 		m_Owner = m_OwnerBackup;
 		m_Level = m_LevelBackup;
+		
+		// Raise or lower the block!
+		DetermineRaisingOrLowering();
 	}
 	
 	
@@ -536,21 +531,35 @@ public class BuildingBlock : MonoBehaviour {
 		if (!m_IsMoving)
 			return;
 		
+		Color primaryColor = m_DefaultColor;
+		if (m_Owner != null)
+		{
+			float level = 0.8f - (0.6f * (float)m_Level / (float)GenerateBlocks.numberOfLevels);
+			primaryColor = level * m_Owner.PlayerColor;
+		}
+		
 		// Move for a set distance!
-		if (this.transform.position.z <= (m_DefaultPos.z - distanceToMove))
+		if (this.transform.position.z <= (m_DefaultPos.z - (distanceToMove * m_HeightLevel)))
 		{
 			m_IsMoving	= false;
 			m_MustRaise	= false;
 			
-			this.transform.position	= m_DefaultPos - new Vector3(0.0f, 0.0f, distanceToMove);
-			m_FinalColor			= m_TrailOwner.PlayerColor;
+			this.transform.position	= m_DefaultPos - new Vector3(0.0f, 0.0f, distanceToMove * m_HeightLevel);
+			if (m_TrailOwner != null)
+				m_FinalColor = m_TrailOwner.PlayerColor;
+			else
+				m_FinalColor = primaryColor;
 		}
 		else
 		{
 			this.transform.Translate(new Vector3(0.0f, 0.0f, -distanceToMove * RateToMove * Time.deltaTime));
-			float scale		= (m_DefaultPos.z - this.transform.position.z) / distanceToMove;
-			m_FinalColor	= (m_DefaultColor * (1.0f - scale)) + (m_TrailOwner.PlayerColor * scale);
-		}
+			float scale		= (m_DefaultPos.z - this.transform.position.z) / (distanceToMove * m_HeightLevel);
+			
+			if (m_Owner != null)
+				m_FinalColor	= (primaryColor * (1.0f - scale)) + (m_Owner.PlayerColor * scale);
+			else
+				m_FinalColor	= (primaryColor * (1.0f - scale)) + m_TrailColor * scale;
+ 		}
 	}
 	
 	// Drop the block back down
@@ -560,11 +569,6 @@ public class BuildingBlock : MonoBehaviour {
 		if (!m_IsMoving)
 			return;
 		
-		// Set the distance to offset
-		float distance = 0.0f;
-		if (m_Level == GenerateBlocks.numberOfLevels)
-			distance = distanceToMove * 2.0f;
-		
 		Color primaryColor = m_DefaultColor;
 		if (m_Owner != null)
 		{
@@ -573,18 +577,22 @@ public class BuildingBlock : MonoBehaviour {
 		}
 		
 		// Move for a set distance!
-		if (this.transform.position.z >= (m_DefaultPos.z - distance))
+		if (this.transform.position.z >= (m_DefaultPos.z - (distanceToMove * m_HeightLevel)))
 		{
 			m_IsMoving	= false;
 			m_MustLower	= false;
 			
-			this.transform.position	= m_DefaultPos - new Vector3(0.0f, 0.0f, distance);
-			m_FinalColor			= primaryColor;
+			this.transform.position	= m_DefaultPos - new Vector3(0.0f, 0.0f, distanceToMove * m_HeightLevel);
+			if (m_TrailOwner != null)
+				m_FinalColor = m_TrailOwner.PlayerColor;
+			else
+				m_FinalColor = primaryColor;
 		}
 		else
 		{
 			this.transform.Translate(new Vector3(0.0f, 0.0f, distanceToMove * RateToMove * Time.deltaTime));
-			float scale		= distanceToMove - (m_DefaultPos.z - this.transform.position.z) / distanceToMove;
+			float scale		= (m_DefaultPos.z - this.transform.position.z) / (distanceToMove);
+			
 			m_FinalColor	= (primaryColor * (1.0f - scale)) + (m_TrailColor * scale);
 		}
 	}

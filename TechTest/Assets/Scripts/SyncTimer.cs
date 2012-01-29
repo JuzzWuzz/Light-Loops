@@ -3,14 +3,19 @@ using System.Collections;
 
 public class SyncTimer : MonoBehaviour {
 	
-	public float timeLeft = 20f;
+	
+	public float gameTime = 250f;
+	private float timeLeft = 20f;
+	public float TimeLeft {
+		get{return timeLeft;}		
+	}
 	
 	private bool started = false;
 	
 	// Use this for initialization
 	void Start () 
 	{
-		
+		timeLeft = gameTime;
 	}
 	
 	// Update is called once per frame
@@ -44,5 +49,11 @@ public class SyncTimer : MonoBehaviour {
 	public void StartTimer()
 	{
 		started = true;
+	}
+	
+	public void ResetTimer()
+	{
+		if(TextControl.HostGame)
+			timeLeft = gameTime;
 	}
 }

@@ -20,7 +20,7 @@ public class NetworkingScript : MonoBehaviour {
 		Network.sendRate = 60;
 		if(TextControl.HostGame)
 		{						
-			Network.InitializeServer(4, 22000, false);	
+			Network.InitializeServer(6, 22000, false);	
 		}
 		else
 		{			

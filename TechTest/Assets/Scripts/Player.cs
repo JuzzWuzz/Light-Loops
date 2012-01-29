@@ -8,6 +8,7 @@ public class Player : MonoBehaviour {
 	public int				playerNumber;
 	private BuildingBlock	m_LastHitBlock;
 	private Color			m_PlayerColor;
+	public Light 			playerLight;
 	
 	private ArrayList		m_ProcessedBlocks;
 	private ArrayList		m_UndoList;
@@ -91,7 +92,7 @@ public class Player : MonoBehaviour {
 				//renderer.material.color = m_PlayerColor;
 			break;
 		case 5:
-				m_PlayerColor = Color.white;
+				m_PlayerColor = Color.yellow;
 				//renderer.material.color = m_PlayerColor;
 			break;
 		case 6:
@@ -99,10 +100,11 @@ public class Player : MonoBehaviour {
 				//renderer.material.color = m_PlayerColor;
 			break;
 			
-		}
-		
+		}		
+		playerLight.light.color = m_PlayerColor;
 		//If the this is a joining player, reset our world.	
-		Scoreboard.playerList.Add(this);				
+		Scoreboard.playerList.Add(this);		
+		
 		
 		//Reset all scores
 		foreach (Player plr in Scoreboard.playerList) {
@@ -291,6 +293,7 @@ public class Player : MonoBehaviour {
 		m_KillPlayers.Clear();
 		m_FloodFillQueue.Clear();
 		m_FloodFillFailed = false;
+		m_UndoCapture = false;
 		
 		Debug.Log("Performing Chain Capture of perimeter blocks");
 		if (m_LastHitBlock != null)
@@ -324,8 +327,7 @@ public class Player : MonoBehaviour {
 			if (m_UndoCapture)
 			{
 				block.UndoCapture();
-			}
-			block.DirectionCameFrom	= 0;
+			}			
 			block.Visited			= false;
 			block.Captured			= false;
 		}
@@ -335,7 +337,8 @@ public class Player : MonoBehaviour {
 		{
 			foreach (Player enemy in m_KillPlayers)
 			{
-				enemy.KillPlayer();
+				if(enemy != null)
+					enemy.KillPlayer();
 			}
 		}
 		

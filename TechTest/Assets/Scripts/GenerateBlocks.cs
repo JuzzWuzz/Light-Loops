@@ -6,6 +6,7 @@ public class GenerateBlocks : MonoBehaviour {
 	/// Load the prefab for the block into this variable.
 	/// </summary>
 	public BuildingBlock cube;
+	public int unityGridSize = 50;
 	public static int gridSize = 50;
 	public float cubeSize = 3f;
 	public static float cubeSpacing = 4.0f;
@@ -19,6 +20,7 @@ public class GenerateBlocks : MonoBehaviour {
 	// Use this for initialization
 	void Start () 
 	{
+		gridSize = unityGridSize;
 		// Create the array
 		blocks = new BuildingBlock[gridSize, gridSize];
 		

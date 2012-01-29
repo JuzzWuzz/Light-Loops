@@ -38,7 +38,7 @@ public class Scoreboard : MonoBehaviour {
 		{
 			UpdateScores();
 			
-			timeRemaining.text = "Time Left: "+timer.timeLeft.ToString("0.00");
+			timeRemaining.text = "Time Left: "+timer.TimeLeft.ToString("0.00");
 		}		
 	}
 	
@@ -177,6 +177,6 @@ public class Scoreboard : MonoBehaviour {
 	{
 		playerList.Clear();
 		percantageItems.Clear();
-		
+		instance.timer.ResetTimer();		
 	}
 }
