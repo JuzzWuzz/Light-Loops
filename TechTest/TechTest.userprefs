@@ -1,13 +1,30 @@
 ﻿<Properties>
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\Scripts\Player.cs">
-    <Files>
-      <File FileName="Assets\Scripts\Player.cs" Line="138" Column="45" />
-      <File FileName="Assets\Scripts\NetworkingScript.cs" Line="6" Column="34" />
-      <File FileName="Assets\Scripts\SmoothLookAt.cs" Line="7" Column="22" />
-      <File FileName="Assets\Scripts\MyEditable3DText.cs" Line="27" Column="25" />
-      <File FileName="Assets\Scripts\GenerateBlocks.cs" Line="15" Column="40" />
-    </Files>
+  <MonoDevelop.Ide.Workbench>
+    <Pads>
+      <Pad Id="ProjectPad">
+        <State expanded="True">
+          <Node name="Assembly-CSharp" expanded="True">
+            <Node name="Assets" expanded="True">
+              <Node name="Scripts" expanded="True">
+                <Node name="BuildingBlock.cs" selected="True" />
+              </Node>
+            </Node>
+          </Node>
+          <Node name="Assembly-UnityScript-firstpass" expanded="True">
+            <Node name="Assets" expanded="True">
+              <Node name="Standard Assets" expanded="True">
+                <Node name="Character Controllers" expanded="True">
+                  <Node name="Sources" expanded="True">
+                    <Node name="Scripts" expanded="True" />
+                  </Node>
+                </Node>
+              </Node>
+            </Node>
+          </Node>
+        </State>
+      </Pad>
+    </Pads>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
     <BreakpointStore />
