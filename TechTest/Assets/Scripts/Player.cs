@@ -188,26 +188,37 @@ public class Player : MonoBehaviour {
 	// Perform a capture of the blocks
 	public void PerformCapture(BuildingBlock first)
 	{
+		Debug.Log("Starting new capture command!");
 		// Reset the processed blocks and undo lists
 		m_ProcessedBlocks.Clear();
 		m_UndoList.Clear();
 		m_KillPlayers.Clear();
 		m_FloodFillQueue.Clear();
 		
+		Debug.Log("Performing Chain Capture of perimeter blocks");
 		if (m_LastHitBlock != null)
 			m_LastHitBlock.ChainCaptureBlocks();
 		
+		Debug.Log("Adding cyclic dependancy");
+		// Add a cyclic situation to the set of nodes (easier processing!)
 		m_LastHitBlock.NextBlock	= first;
 		first.PrevBlock				= m_LastHitBlock;
 		
+		// Nuke out the player objects last hit block as there is none now!
 		m_LastHitBlock = null;
 		
 		// Ask for a flood fill operation
-		Debug.Log("Before Flood-Fill");
+		Debug.Log("Before Flood-Fill Init");
 		FloodFillInit();
+		Debug.Log("After Flood-Fill Init");
 		FloodFill();
-		Debug.Log("After Flood-Fill");
+		Debug.Log("Flood-Fill Done");
 		
+		
+		if (m_UndoCapture)
+			Debug.Log("Invalid move so have to revert changes!");
+		
+		Debug.Log("Cleaning up capture process now");
 		// Loop over all processed blocks to reset their variables
 		foreach (BuildingBlock block in m_ProcessedBlocks)
 		{
@@ -229,8 +240,10 @@ public class Player : MonoBehaviour {
 				enemy.KillPlayer();
 			}
 		}
+		Debug.Log("Capture command completed");
 	}
-
+	
+	// The initialisation step for the flood fill which goes around and works out where the candidates are
 	void FloodFillInit()
 	{
 		// Variables
@@ -378,11 +391,11 @@ public class Player : MonoBehaviour {
 				
 				// Capture the current block
 				block.CaptureSpecificBlock(this);
-				block.m_MustOverrideColor = true;
 			}
 		}
 	}
 	
+	// Add a new item to the queue if the x & y values are valid and the target has not already been added
 	void AddToQueueIfValid(int x, int y)
 	{
 		// If the parameters are in bounds then get the object there
