@@ -132,7 +132,51 @@ public class Scoreboard : MonoBehaviour {
 	
 	public static void TimesUp()
 	{
-		//End game due to tome over;
+		//End game due to time over;
+		gameStarted = false;	
+		
+		//Determine which player has highest score
+		float owned = 0f;
+		int playerID = -1;
+		
+		foreach(Player p in playerList)
+		{
+			if(p.PercentageOwned > owned)
+			{
+				owned = p.PercentageOwned;
+				playerID = p.playerNumber;
+			}
+		}
+		
+		//Show end game message
+		if(instance.winText == null)
+		{
+			instance.winText = (TextMesh)Instantiate(instance.HUDItemTemplate, new Vector3(0, 0, 0), Quaternion.identity);
+			instance.winText.transform.parent = instance.transform;
+			instance.winText.transform.localEulerAngles = new Vector3(0, 0, 0);
+			instance.winText.transform.localPosition = (new Vector3(-6f, 0f, 0f));
+			instance.winText.renderer.material.color = ((Player)playerList[playerID - 1]).PlayerColor;
+		}
+		
+		if(NetworkingScript.myPlayer == playerID)
+		{
+			instance.winText.text = "Times up! You won the game!!";
+		}
+		else if(playerID == -1)
+        {
+			instance.winText.text = "Tie! Everyone fails!";
+		}
+		else
+		{
+			instance.winText.text = "Times up! Player "+playerID +" won the game!";	
+		}
+		
+	}
+	
+	public static void Reset()
+	{
+		playerList.Clear();
+		percantageItems.Clear();
 		
 	}
 }

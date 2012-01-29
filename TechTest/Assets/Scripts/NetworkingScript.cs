@@ -17,7 +17,7 @@ public class NetworkingScript : MonoBehaviour {
 	// Use this for initialization
 	void Start()
 	{		
-		Network.sendRate = 40;
+		Network.sendRate = 60;
 		if(TextControl.HostGame)
 		{						
 			Network.InitializeServer(4, 22000, false);	

@@ -3,7 +3,7 @@ using System.Collections;
 
 public class SyncTimer : MonoBehaviour {
 	
-	public float timeLeft = 240f;
+	public float timeLeft = 20f;
 	
 	private bool started = false;
 	

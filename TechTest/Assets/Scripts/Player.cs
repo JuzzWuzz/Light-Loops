@@ -21,6 +21,7 @@ public class Player : MonoBehaviour {
 	
 	public float 			respawnTime = 5f;
 	public float 			moveSpeed = 0.5f;
+	private float 			actualMoveSpeed;
 
 	private float 			percentageOwned = 0f;
 	private float			percentageAdjustment = 0.0f;
@@ -36,6 +37,11 @@ public class Player : MonoBehaviour {
 				percentageOwned = value;
 			}
 		}
+	}
+	
+	public void SetSpeed(float fraction)
+	{
+		actualMoveSpeed = fraction * moveSpeed;
 	}
 	
 	//Synchronise this.
@@ -54,6 +60,8 @@ public class Player : MonoBehaviour {
 	// Use this for initialization
 	void Start ()
 	{		
+		
+		actualMoveSpeed = moveSpeed;
 		m_LastHitBlock = null;
 		m_ProcessedBlocks = new ArrayList();
 		m_UndoList = new ArrayList();
@@ -94,8 +102,13 @@ public class Player : MonoBehaviour {
 		}
 		
 		//If the this is a joining player, reset our world.	
-		Scoreboard.playerList.Add(this);		
-		Scoreboard.UpdateScores();
+		Scoreboard.playerList.Add(this);				
+		
+		//Reset all scores
+		foreach (Player plr in Scoreboard.playerList) {
+			plr.PercentageOwned = 0;
+			plr.networkReset();
+		}
 		
 		if(playerNumber != NetworkingScript.myPlayer)
 		{
@@ -110,7 +123,8 @@ public class Player : MonoBehaviour {
 					}
 				}
 			}
-		}	
+		}
+			
 	}
 	
 	// Update is called once per frame
@@ -118,19 +132,17 @@ public class Player : MonoBehaviour {
 	{
 		if(Input.GetKeyUp("escape"))
 		{
-			Application.LoadLevel(0);	
+			Scoreboard.Reset();
+			numberOfPlayers = 0;
+			Application.LoadLevel(0);			
 		}
 		
 		if(playerNumber == NetworkingScript.myPlayer && Scoreboard.GameStarted)
-		{
-			if(Input.GetKeyDown("u"))
-			{
-				percentageOwned += 0.5f;
-			}
+		{			
 			if(!killed)
 			{							
-				transform.position = new Vector3(transform.position.x + Input.GetAxis("Horizontal"), 
-				                                 transform.position.y + Input.GetAxis("Vertical") , 
+				transform.position = new Vector3(transform.position.x + (Input.GetAxis("Horizontal")*actualMoveSpeed), 
+				                                 transform.position.y + (Input.GetAxis("Vertical")*actualMoveSpeed) , 
 				                                 transform.position.z);
 				
 				if(transform.position.x < 0)
@@ -168,9 +180,23 @@ public class Player : MonoBehaviour {
 	/// </summary>
 	public void KillPlayer()
 	{
+		// Chain nuke
+       if (m_LastHitBlock != null)
+           m_LastHitBlock.ChainNukeBlocks();
+		
 		transform.position = new Vector3(transform.position.x, transform.position.y, 215);
 		timer = 0f;
 		killed = true;
+	}
+	
+	/// <summary>
+	/// Used soley to reset local instances of network players.
+	/// </summary>
+	public void networkReset()
+	{
+		// Chain nuke
+       	if (m_LastHitBlock != null)
+           m_LastHitBlock.ChainNukeBlocks();
 	}
 	
 	/// <summary>
@@ -197,6 +223,11 @@ public class Player : MonoBehaviour {
 					
 		transform.position = position;
 		killed = false;
+		
+		// Chain nuke
+       	if (m_LastHitBlock != null)
+           m_LastHitBlock.ChainNukeBlocks();
+		
 	}
 	
 	// Accessor for the players color

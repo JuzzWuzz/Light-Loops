@@ -79,6 +79,7 @@ public class BuildingBlock : MonoBehaviour {
 		
 		m_OwnerColor		= m_DefaultColor;
 		m_TrailColor		= m_DefaultColor;
+		m_FinalColor		= m_DefaultColor;
 		
 		m_LevelBackup		= m_Level;
 		m_OwnerBackup		= m_Owner;
@@ -207,6 +208,32 @@ public class BuildingBlock : MonoBehaviour {
 			// Kill player
 			collidingPlayer.KillPlayer();
 			return;
+		}
+		
+		// Check for ownership of the current block
+		float speed		= 1.0f;
+		float levelDiff	= (float)m_Level / (float)GenerateBlocks.numberOfLevels;
+		// This block is the colliding players territory
+		if (m_Owner == collidingPlayer)
+		{
+			// Speed 100% -> 300%
+			speed += (levelDiff * 2.0f);
+			collidingPlayer.SetSpeed(speed);
+		}
+		// Enemy (or neutral) block is hit
+		else if (m_Owner != collidingPlayer)
+		{
+			// Player hit a max level block and must be killed!
+			if (m_Level == GenerateBlocks.numberOfLevels)
+			{
+				// Kill player
+				collidingPlayer.KillPlayer();
+				return;
+			}
+			
+			// Speed 50% -> 100%
+			speed -= (levelDiff * 0.5f);
+			collidingPlayer.SetSpeed(speed);
 		}
 		
 		// Triggered a neutral block
@@ -533,6 +560,11 @@ public class BuildingBlock : MonoBehaviour {
 		if (!m_IsMoving)
 			return;
 		
+		// Set the distance to offset
+		float distance = 0.0f;
+		if (m_Level == GenerateBlocks.numberOfLevels)
+			distance = distanceToMove * 2.0f;
+		
 		Color primaryColor = m_DefaultColor;
 		if (m_Owner != null)
 		{
@@ -541,20 +573,13 @@ public class BuildingBlock : MonoBehaviour {
 		}
 		
 		// Move for a set distance!
-		if (this.transform.position.z >= (m_DefaultPos.z))
+		if (this.transform.position.z >= (m_DefaultPos.z - distance))
 		{
 			m_IsMoving	= false;
 			m_MustLower	= false;
 			
-			this.transform.position	= m_DefaultPos;
+			this.transform.position	= m_DefaultPos - new Vector3(0.0f, 0.0f, distance);
 			m_FinalColor			= primaryColor;
-			
-			/*if (m_DirectionCameFrom == 1)
-				this.renderer.material.color=Color.cyan;
-			else if (m_DirectionCameFrom == 2)
-				this.renderer.material.color=Color.yellow;
-			else if (m_DirectionCameFrom == 3)
-				this.renderer.material.color=Color.magenta;*/
 		}
 		else
 		{
