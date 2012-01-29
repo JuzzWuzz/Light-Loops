@@ -51,8 +51,10 @@
      <Compile Include="Assets\Scripts\MyEditable3DText.cs" />
      <Compile Include="Assets\Scripts\NetworkingScript.cs" />
      <Compile Include="Assets\Scripts\Player.cs" />
+     <Compile Include="Assets\Scripts\Scoreboard.cs" />
      <Compile Include="Assets\Scripts\ShadowScript.cs" />
      <Compile Include="Assets\Scripts\SmoothLookAt.cs" />
+     <Compile Include="Assets\Scripts\SyncTimer.cs" />
      <Compile Include="Assets\Scripts\TextControl.cs" />
      <None Include="Assets\Shaders\OccludedText.shader" />
      <None Include="Assets\Standard Assets\Particles\Sources\Shaders\Particle Alpha Blend (Queue +100).shader" />

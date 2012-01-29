@@ -43,13 +43,11 @@ public class NetworkingScript : MonoBehaviour {
 				
 				myPlayer = Player.numberOfPlayers + 1;				
 				float maxPoint = GenerateBlocks.gridSize * GenerateBlocks.cubeSpacing;
-				Vector3 position = new Vector3(Random.value * maxPoint, Random.value * maxPoint, 195);				
-				Player playerInstantiation = (Player)Network.Instantiate(player, position, Quaternion.identity, 0);				
-				mainCamera.target = playerInstantiation.transform;
-				
-				localPlayer = playerInstantiation;
+				Vector3 position = new Vector3(Random.value * maxPoint, Random.value * maxPoint, 190);				
+				localPlayer = (Player)Network.Instantiate(player, position, Quaternion.identity, 0);				
+				mainCamera.target = localPlayer.transform;				
 			}
-		}
+		}	
 	
 	}
 }

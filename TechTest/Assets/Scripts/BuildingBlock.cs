@@ -3,28 +3,36 @@ using System.Collections;
 
 public class BuildingBlock : MonoBehaviour {
 	
-	public float	distanceToMove;
-	public float	RateToMove;
+	public float			distanceToMove;
+	public float			RateToMove;
 	
-	private Vector3	m_DefaultPos;
-	private Color	m_DefaultColor;
+	private Vector3			m_DefaultPos;
+	private Color			m_DefaultColor;
+	private Color			m_FinalColor;
 	
-	private bool	m_MustRaise;
-	private bool	m_MustLower;
-	private bool	m_IsMoving;
+	private bool			m_MustRaise;
+	private bool			m_MustLower;
+	private bool			m_IsMoving;
 	
-	private int		m_Level;
+	public bool				m_MustOverrideColor;
+	public Color			m_OverrideColor;
+	
+	private int				m_Level;
 	
 	// Direction used for filling algorithm {0 = invalid (null), 1 = horizontal (left/right), 2 = vertical (up/down), 3 = diagonal}
-	private int		m_DirectionCameFrom;
+	private int				m_DirectionCameFrom;
 	
-	private Vector2	m_GridIndex;
+	private Vector2			m_GridIndex;
 	
 	// Controls for chaining
 	private BuildingBlock	m_PrevBlock;
-	private Player	m_TrailOwner;
-	private Player	m_Owner;
-	private Player	m_PlayerPresent;
+	private BuildingBlock	m_NextBlock;
+	private Player			m_TrailOwner;
+	private Player			m_Owner;
+	private Player			m_PlayerPresent;
+	
+	private bool			m_Visited;
+	private bool			m_Captured;
 	
 	// Color controls
 	private Color			m_OwnerColor;
@@ -32,14 +40,17 @@ public class BuildingBlock : MonoBehaviour {
 	
 	// Backup vars for undo of capture
 	private int				m_LevelBackup;
-	private Player	m_OwnerBackup;
+	private Player			m_OwnerBackup;
 	
 	
 	// Use this for initialization
 	void Start() 
 	{
-		m_DefaultColor = Color.grey;
+		m_DefaultColor	= Color.grey;
+		m_FinalColor	= m_DefaultColor;
 		this.renderer.material.color = m_DefaultColor;
+		
+		m_OverrideColor	= Color.yellow;
 		
 		Reset();
 	}
@@ -47,26 +58,32 @@ public class BuildingBlock : MonoBehaviour {
 	// Reset the blocks variables
 	public void Reset()
 	{
-		m_MustLower = false;
-		m_MustRaise = false;
-		m_IsMoving	= false;
+		m_MustLower 		= false;
+		m_MustRaise			= false;
+		m_IsMoving			= false;
 		
-		m_Level		= 0;
+		m_MustOverrideColor	= false;
 		
-		m_DirectionCameFrom = 0;
+		m_Level				= 0;
 		
-		m_PrevBlock	= null;
-		m_TrailOwner= null;
-		m_Owner		= null;
-		m_PlayerPresent = null;
+		m_DirectionCameFrom	= 0;
 		
-		m_OwnerColor= m_DefaultColor;
-		m_TrailColor= m_DefaultColor;
+		m_PrevBlock			= null;
+		m_NextBlock			= null;
+		m_TrailOwner		= null;
+		m_Owner				= null;
+		m_PlayerPresent		= null;
 		
-		m_LevelBackup = m_Level;
-		m_OwnerBackup = m_Owner;
+		m_Visited			= false;
+		m_Captured			= false;
 		
-		this.transform.position = m_DefaultPos;
+		m_OwnerColor		= m_DefaultColor;
+		m_TrailColor		= m_DefaultColor;
+		
+		m_LevelBackup		= m_Level;
+		m_OwnerBackup		= m_Owner;
+		
+		this.transform.position	= m_DefaultPos;
 	}
 	
 	// Set the initial position of the cube and store this as default!
@@ -109,6 +126,34 @@ public class BuildingBlock : MonoBehaviour {
 		set { m_PlayerPresent = value; }
 	}
 	
+	// Accessor/Mutator for the previous block object
+	public BuildingBlock PrevBlock
+	{
+		get { return(m_PrevBlock); }
+		set { m_PrevBlock = value; }
+	}
+	
+	// Accessor/Mutator for the next block object
+	public BuildingBlock NextBlock
+	{
+		get { return(m_NextBlock); }
+		set { m_NextBlock = value; }
+	}
+	
+	// Accessor/Mutator for visiting a block
+	public bool Visited
+	{
+		get { return(m_Visited); }
+		set { m_Visited = value; }
+	}
+	
+	// Accessor/Mutator for capturing a block
+	public bool Captured
+	{
+		get { return(m_Captured); }
+		set { m_Captured = value; }
+	}
+	
 	
 	
 	// Update is called once per frame
@@ -119,6 +164,11 @@ public class BuildingBlock : MonoBehaviour {
 			RaiseBlock();
 		else if (m_MustLower)
 			LowerBlock();
+		
+		if (m_MustOverrideColor)
+			this.renderer.material.color = m_OverrideColor;
+		else
+			this.renderer.material.color = m_FinalColor;
 	}
 	
 	
@@ -137,21 +187,26 @@ public class BuildingBlock : MonoBehaviour {
 		Player collidingPlayer = collider.GetComponent("Player") as Player;
 		
 		// Remove self from last known block
-		if(m_TrailOwner != null)
+		if(collidingPlayer != null)
 		{
-		if (m_TrailOwner.LastHitBlock != null)
-			m_TrailOwner.LastHitBlock.m_PlayerPresent = null;
+			if (collidingPlayer.LastHitBlock != null)
+			{
+				collidingPlayer.LastHitBlock.m_PlayerPresent	= null;
+				//collidingPlayer.LastHitBlock.m_MustOverrideColor= false;
+			}
 		}
 		// Taking ownership of fresh block
 		if (m_PlayerPresent == null)
 		{
 			m_PlayerPresent = collidingPlayer;
+			//m_MustOverrideColor = true;
 		}
 		// Enemy already has this block! So kill colliding player
 		else if (m_PlayerPresent != collidingPlayer)
 		{
 			// Kill player
 			collidingPlayer.KillPlayer();
+			return;
 		}
 		
 		// Triggered a neutral block
@@ -159,6 +214,8 @@ public class BuildingBlock : MonoBehaviour {
 		{
 			m_TrailOwner = collidingPlayer;
 			m_PrevBlock = m_TrailOwner.LastHitBlock;
+			if (m_PrevBlock != null)
+				m_PrevBlock.m_NextBlock = this;
 			m_TrailOwner.LastHitBlock = this;
 			
 			// Set the direction for filling algo, see top for number def
@@ -190,19 +247,24 @@ public class BuildingBlock : MonoBehaviour {
 					m_PrevBlock = null;
 				}
 				
-				Debug.Log("Mode: " + m_DirectionCameFrom);
+				// Set the direction for filling algo, see top for number def
 				DetermineDirection(m_TrailOwner.LastHitBlock);
-				Debug.Log("Mode: " + m_DirectionCameFrom);
 				
 				// Now perform a capture of the enclosed area
-				m_TrailOwner.PerformCapture();
+				m_TrailOwner.PerformCapture(this);
+				
+				// Recall the trigger method to set tail to start at this current block!
+				OnTriggerEnter(collider);
 			}
 		}
 		// Hit an enemy block
 		else
 		{
 			Debug.Log("Hit enemy block");
+			// Nuke all of the enemies blocks
 			ChainNukeBlocks();
+			
+			// Recall the trigger method to make sure that the current players trail makes use of the newly freed block
 			OnTriggerEnter(collider);
 		}
 	}
@@ -261,11 +323,41 @@ public class BuildingBlock : MonoBehaviour {
 		}*/
 	}
 	
+	// Determine the position of this block in relation to another, returns a 4-way int
+	public int Direction(BuildingBlock block)
+	{
+		int ret = -1;
+		// Block on right
+		if (block.GridIndex.x > GridIndex.x)
+		{
+			ret = 0;
+		}
+		// Block on left
+		else if (block.GridIndex.x < GridIndex.x)
+		{
+			ret = 2;
+		} 
+		
+		// Block is above
+		if (block.GridIndex.y > GridIndex.y)
+		{
+			ret = 1;
+		}
+		// Block is below
+		else if (block.GridIndex.y < GridIndex.y)
+		{
+			ret = 3;
+		}
+		
+		// Return the direction
+		return(ret);
+	}
+	
 	
 	
 	// Chain nuke all previous blocks!
 	// This will destroy a tail that has been hit!
-	void ChainNukeBlocks()
+	public void ChainNukeBlocks()
 	{
 		m_TrailOwner = null;
 		
@@ -292,8 +384,24 @@ public class BuildingBlock : MonoBehaviour {
 		if (m_PrevBlock != null)
 		{
 			m_PrevBlock.ChainCaptureBlocks();
-			m_PrevBlock = null;
 		}
+	}
+	
+	// Return if the current block is a boundary matching the input block
+	public bool IsBorder(BuildingBlock block)
+	{
+		bool result = true;
+		
+		// Check levels
+		if (block.m_Level != m_Level)
+			result = false;
+		
+		// Check that they are same owner
+		if (block.m_Owner != m_Owner)
+			result = false;
+		
+		// Return result
+		return(result);
 	}
 	
 	// Capture this specific block
@@ -308,6 +416,8 @@ public class BuildingBlock : MonoBehaviour {
 		m_MustLower	= true;
 		m_MustRaise	= false;
 		m_IsMoving	= true;
+		
+		m_Captured	= true;
 		
 		bool KillEnemyPlayer = m_PlayerPresent != owner;
 		
@@ -389,15 +499,14 @@ public class BuildingBlock : MonoBehaviour {
 			m_IsMoving	= false;
 			m_MustRaise	= false;
 			
-			this.transform.position		= m_DefaultPos - new Vector3(0.0f, 0.0f, distanceToMove);
-			this.renderer.material.color= m_TrailOwner.PlayerColor;
+			this.transform.position	= m_DefaultPos - new Vector3(0.0f, 0.0f, distanceToMove);
+			m_FinalColor			= m_TrailOwner.PlayerColor;
 		}
 		else
 		{
 			this.transform.Translate(new Vector3(0.0f, 0.0f, -distanceToMove * RateToMove * Time.deltaTime));
-			float scale = (m_DefaultPos.z - this.transform.position.z) / distanceToMove;
-			Color mixedColor = (m_DefaultColor * (1.0f - scale)) + (m_TrailOwner.PlayerColor * scale);
-			this.renderer.material.color = mixedColor;
+			float scale		= (m_DefaultPos.z - this.transform.position.z) / distanceToMove;
+			m_FinalColor	= (m_DefaultColor * (1.0f - scale)) + (m_TrailOwner.PlayerColor * scale);
 		}
 	}
 	
@@ -421,8 +530,8 @@ public class BuildingBlock : MonoBehaviour {
 			m_IsMoving	= false;
 			m_MustLower	= false;
 			
-			this.transform.position		= m_DefaultPos;
-			this.renderer.material.color= primaryColor;
+			this.transform.position	= m_DefaultPos;
+			m_FinalColor			= primaryColor;
 			
 			/*if (m_DirectionCameFrom == 1)
 				this.renderer.material.color=Color.cyan;
@@ -434,9 +543,8 @@ public class BuildingBlock : MonoBehaviour {
 		else
 		{
 			this.transform.Translate(new Vector3(0.0f, 0.0f, distanceToMove * RateToMove * Time.deltaTime));
-			float scale = distanceToMove - (m_DefaultPos.z - this.transform.position.z) / distanceToMove;
-			Color mixedColor = (primaryColor * (1.0f - scale)) + (m_TrailColor * scale);
-			this.renderer.material.color = mixedColor;
+			float scale		= distanceToMove - (m_DefaultPos.z - this.transform.position.z) / distanceToMove;
+			m_FinalColor	= (primaryColor * (1.0f - scale)) + (m_TrailColor * scale);
 		}
 	}
 }

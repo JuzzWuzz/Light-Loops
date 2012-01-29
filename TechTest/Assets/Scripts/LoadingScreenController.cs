@@ -55,6 +55,10 @@ public class LoadingScreenController : MonoBehaviour {
 		}	
 		else if(elapsedTime < 6)
 		{
+			if(!Scoreboard.GameStarted)
+			{
+				Scoreboard.StartGame();	
+			}
 			shadow.text = "Go!";
 			GetComponent<TextMesh>().text = "Go!";
 			float goneLevel = 6 - elapsedTime;
