@@ -384,7 +384,6 @@ public class BuildingBlock : MonoBehaviour {
 		if (m_PrevBlock != null)
 		{
 			m_PrevBlock.ChainCaptureBlocks();
-			m_PrevBlock = null;
 		}
 	}
 	

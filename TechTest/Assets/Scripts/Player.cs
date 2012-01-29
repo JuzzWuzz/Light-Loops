@@ -13,7 +13,8 @@ public class Player : MonoBehaviour {
 	private ArrayList		m_UndoList;
 	private ArrayList		m_KillPlayers;
 	private Queue			m_FloodFillQueue;
-	private bool			m_UndoCapture;	
+	private bool			m_UndoCapture;
+	private bool			m_FloodFillFailed;
 	
 	private bool 			killed = false;
 	private float 			timer = 0f;
@@ -29,6 +30,7 @@ public class Player : MonoBehaviour {
 		m_KillPlayers		= new ArrayList();
 		m_FloodFillQueue	= new Queue();
 		m_UndoCapture		= false;
+		m_FloodFillFailed	= false;
 		
 		numberOfPlayers++;
 		playerNumber = numberOfPlayers;
@@ -194,6 +196,7 @@ public class Player : MonoBehaviour {
 		m_UndoList.Clear();
 		m_KillPlayers.Clear();
 		m_FloodFillQueue.Clear();
+		m_FloodFillFailed = false;
 		
 		Debug.Log("Performing Chain Capture of perimeter blocks");
 		if (m_LastHitBlock != null)
@@ -211,7 +214,8 @@ public class Player : MonoBehaviour {
 		Debug.Log("Before Flood-Fill Init");
 		FloodFillInit();
 		Debug.Log("After Flood-Fill Init");
-		FloodFill();
+		if (!m_FloodFillFailed)
+			FloodFill();
 		Debug.Log("Flood-Fill Done");
 		
 		
@@ -256,7 +260,12 @@ public class Player : MonoBehaviour {
 		int count = 0;
 		while (true)
 		{
-			count++;
+		
+			if (count >= 40)
+			{
+				m_FloodFillFailed = true;
+				break;
+			}
 			// Set block2 to be the highest top corner block
 			block2 = biggest;
 			
@@ -274,6 +283,8 @@ public class Player : MonoBehaviour {
 						block2 = block;
 				}
 			}
+			
+			count++;
 			
 			// Update the block values then move into the next iteration
 			block3 = block1;
@@ -305,8 +316,7 @@ public class Player : MonoBehaviour {
 		}
 		Debug.Log("Took " + count + " iterations to solve!");
 		
-		
-		BuildingBlock first		= block3;
+		BuildingBlock first		= block1;
 		BuildingBlock current	= first;
 		BuildingBlock next		= current.NextBlock;
 		
