@@ -14,6 +14,8 @@ public class GenerateBlocks : MonoBehaviour {
 	
 	public static BuildingBlock[,] blocks;
 	
+	public static float percentagePerBlock = 100 / ((float)gridSize * (float)gridSize);
+	
 	// Use this for initialization
 	void Start () 
 	{

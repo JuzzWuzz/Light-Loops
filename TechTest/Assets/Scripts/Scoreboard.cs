@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using System.IO;
 
 public class Scoreboard : MonoBehaviour {
 	
@@ -57,35 +58,39 @@ public class Scoreboard : MonoBehaviour {
 			}
 			
 			for(int i = 0; i < playerList.Count ; i++)
-			{
-				((TextMesh)percantageItems[i]).renderer.material.color = ((Player)playerList[i]).PlayerColor;
-				((TextMesh)percantageItems[i]).text = ((Player)playerList[i]).PercentageOwned.ToString("0.00") + "%";
-				((TextMesh)percantageItems[i]).transform.localPosition = new Vector3(7, 7-i, 0);
-				
-				//Do a quick victory check
-				if(((Player)playerList[i]).PercentageOwned >= instance.victoryPercent)
+			{				
+				if((i+1) <= percantageItems.Count)
 				{
-					//End game.	
-					gameStarted = false;
+					((TextMesh)percantageItems[i]).renderer.material.color = ((Player)playerList[i]).PlayerColor;
+					((TextMesh)percantageItems[i]).text = ((Player)playerList[i]).PercentageOwned.ToString("0.00") + "%";
+					((TextMesh)percantageItems[i]).transform.localPosition = new Vector3(7, 7-i, 0);
 					
-					//Show end game message
-					if(instance.winText == null)
+					//Do a quick victory check
+					if(((Player)playerList[i]).PercentageOwned >= instance.victoryPercent)
 					{
-						instance.winText = (TextMesh)Instantiate(instance.HUDItemTemplate, new Vector3(0, 0, 0), Quaternion.identity);
-						instance.winText.transform.parent = instance.transform;
-						instance.winText.transform.localEulerAngles = new Vector3(0, 0, 0);
-						instance.winText.transform.localPosition = (new Vector3(-4f, 0f, 0f));
-						instance.winText.renderer.material.color = ((Player)playerList[i]).PlayerColor;
-					}
-					if(NetworkingScript.myPlayer == (i+1))
-					{
-						instance.winText.text = "You won the game!";
-					}
-					else
-					{
-						instance.winText.text = "Player "+(i+1) +" won the game!";	
+						//End game.	
+						gameStarted = false;
+						
+						//Show end game message
+						if(instance.winText == null)
+						{
+							instance.winText = (TextMesh)Instantiate(instance.HUDItemTemplate, new Vector3(0, 0, 0), Quaternion.identity);
+							instance.winText.transform.parent = instance.transform;
+							instance.winText.transform.localEulerAngles = new Vector3(0, 0, 0);
+							instance.winText.transform.localPosition = (new Vector3(-4f, 0f, 0f));
+							instance.winText.renderer.material.color = ((Player)playerList[i]).PlayerColor;
+						}
+						if(NetworkingScript.myPlayer == (i+1))
+						{
+							instance.winText.text = "You won the game!";
+						}
+						else
+						{
+							instance.winText.text = "Player "+(i+1) +" won the game!";	
+						}
 					}
 				}
+			
 			}
 			
 			

@@ -4,7 +4,7 @@ using System.Collections;
 public class Player : MonoBehaviour {
 
 	// Variables
-	public static int numberOfPlayers = 0;
+	public static int		numberOfPlayers = 0;
 	public int				playerNumber;
 	private BuildingBlock	m_LastHitBlock;
 	private Color			m_PlayerColor;
@@ -21,10 +21,14 @@ public class Player : MonoBehaviour {
 	
 	public float 			respawnTime = 5f;
 	public float 			moveSpeed = 0.5f;
+
+	private float 			percentageOwned = 0f;
+	private float			percentageAdjustment = 0.0f;
 	
+	// Accessor/Mutator for the percentage owned by the player
 	public float PercentageOwned 
 	{
-		get{return percentageOwned;}
+		get{ return(percentageOwned); }
 		set
 		{ 
 			if(playerNumber == NetworkingScript.myPlayer)
@@ -33,8 +37,6 @@ public class Player : MonoBehaviour {
 			}
 		}
 	}
-	
-	private float 			percentageOwned = 0f;
 	
 	//Synchronise this.
 	void OnSerializeNetworkView(BitStream stream, NetworkMessageInfo info)
@@ -230,6 +232,23 @@ public class Player : MonoBehaviour {
 	}
 	
 	
+	
+	// Change the score value!
+	public void ChangeScore(float updateVal)
+	{
+		percentageAdjustment += (updateVal * GenerateBlocks.percentagePerBlock);
+	}
+	
+	// Commit score to scoreboard
+	public void CommitScore(bool commit)
+	{
+		// Commit the score if required
+		if (commit)
+			PercentageOwned += percentageAdjustment;
+		
+		// Reset the percentage adjustment
+		percentageAdjustment = 0.0f;
+	}
 		
 	// Perform a capture of the blocks
 	public void PerformCapture(BuildingBlock first)
@@ -288,6 +307,13 @@ public class Player : MonoBehaviour {
 				enemy.KillPlayer();
 			}
 		}
+		
+		// Propogate the score adjustments
+		foreach (Player person in Scoreboard.playerList)
+		{
+			person.CommitScore(!m_UndoCapture);
+		}
+		
 		Debug.Log("Capture command completed");
 	}
 	

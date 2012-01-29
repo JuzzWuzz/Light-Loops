@@ -421,6 +421,11 @@ public class BuildingBlock : MonoBehaviour {
 		
 		bool KillEnemyPlayer = m_PlayerPresent != owner;
 		
+		// Calculate the score for the current block
+		Player prevOwner	= m_Owner;
+		float oldScore		= (float)m_Level / (float)GenerateBlocks.numberOfLevels;
+		float newScore		= 0.0f;
+		
 		// If already owning the block then increase its level
 		if (m_Owner == owner)
 		{
@@ -475,6 +480,17 @@ public class BuildingBlock : MonoBehaviour {
 				}
 			}
 		}
+		
+		// Calculate the new score
+		newScore = (float)m_Level / (float)GenerateBlocks.numberOfLevels;
+		
+		// Reduce old owners score
+		if (prevOwner != null)
+			prevOwner.ChangeScore(-oldScore);
+		
+		// Increase new owners score
+		if (m_Owner != null)
+			m_Owner.ChangeScore(newScore);
 	}
 	
 	// Undo a capture for an invalid area!
