@@ -290,11 +290,13 @@ public class Player : MonoBehaviour {
 			block3 = block1;
 			block1 = block2;
 			
+			/*
 			block3.m_OverrideColor = Color.red;
 			block3.m_MustOverrideColor = true;
 			
 			block1.m_OverrideColor = Color.cyan;
 			block1.m_MustOverrideColor = true;
+			*/
 			
 			// Check to see which direction!
 			if (block3.NextBlock == block1)
